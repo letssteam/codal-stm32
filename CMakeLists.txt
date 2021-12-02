@@ -52,7 +52,11 @@ include_directories(${INCLUDE_DIRS})
 # create our target
 add_library(codal-stm32 ${C_SOURCE_FILES} ${CPP_SOURCE_FILES})
 
-target_link_libraries(codal-stm32 codal-core)
+target_link_libraries(
+    codal-stm32 
+    codal-core 
+    codal-nimble
+    )
 
 # expose it to parent cmake.
 target_include_directories(codal-stm32 PUBLIC ${INCLUDE_DIRS})

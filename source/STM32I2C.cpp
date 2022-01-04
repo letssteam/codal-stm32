@@ -18,7 +18,7 @@ STM32I2C::STM32I2C(STM32Pin& sda, STM32Pin& scl) : I2C(sda, scl), currentAddress
 
 int STM32I2C::setFrequency(uint32_t frequency)
 {
-    i2c_setTiming(&i2c, frequency);
+    stm32_i2c_setTiming(&i2c, frequency);
     return DEVICE_OK;
 }
 
@@ -37,7 +37,7 @@ void STM32I2C::endTransmission(bool sendStop)
 {
     if (!isOnTransmission) return;
 
-    i2c_init(&i2c);
+    stm32_i2c_init(&i2c);
 
     setXferOptions(sendStop);
 
@@ -51,10 +51,10 @@ void STM32I2C::endTransmission(bool sendStop)
         auto offset = i * getBufferSize();
         auto length = min<unsigned>(dataToSent.size() - offset, getBufferSize());
 
-        i2c_master_write(&i2c, currentAddress, dataToSent.data() + offset, length);
+        stm32_i2c_master_write(&i2c, currentAddress, dataToSent.data() + offset, length);
     }
 
-    i2c_deinit(&i2c);
+    stm32_i2c_deinit(&i2c);
     isOnTransmission = false;
     currentAddress   = 0;
 
@@ -95,12 +95,12 @@ vector<uint8_t> STM32I2C::read(uint8_t address, size_t len, bool sendStop)
 
     vector<uint8_t> data(len);
 
-    i2c_init(&i2c);
+    stm32_i2c_init(&i2c);
 
     setXferOptions(sendStop);
-    i2c_master_read(&i2c, address, data.data(), len);
+    stm32_i2c_master_read(&i2c, address, data.data(), len);
 
-    i2c_deinit(&i2c);
+    stm32_i2c_deinit(&i2c);
 
     // target_enable_irq();
 

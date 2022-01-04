@@ -128,19 +128,19 @@ typedef enum {
 } i2c_status_e;
 
 /* Exported functions ------------------------------------------------------- */
-void i2c_init(i2c_t *obj);
-void i2c_custom_init(i2c_t *obj, uint32_t timing, uint32_t addressingMode,
+void stm32_i2c_init(i2c_t *obj);
+void stm32_i2c_custom_init(i2c_t *obj, uint32_t timing, uint32_t addressingMode,
                      uint32_t ownAddress);
-void i2c_deinit(i2c_t *obj);
-void i2c_setTiming(i2c_t *obj, uint32_t frequency);
-i2c_status_e i2c_master_write(i2c_t *obj, uint8_t dev_address, uint8_t *data, uint16_t size);
-i2c_status_e i2c_slave_write_IT(i2c_t *obj, uint8_t *data, uint16_t size);
-i2c_status_e i2c_master_read(i2c_t *obj, uint8_t dev_address, uint8_t *data, uint16_t size);
+void stm32_i2c_deinit(i2c_t *obj);
+void stm32_i2c_setTiming(i2c_t *obj, uint32_t frequency);
+i2c_status_e stm32_i2c_master_write(i2c_t *obj, uint8_t dev_address, uint8_t *data, uint16_t size);
+i2c_status_e stm32_i2c_slave_write_IT(i2c_t *obj, uint8_t *data, uint16_t size);
+i2c_status_e stm32_i2c_master_read(i2c_t *obj, uint8_t dev_address, uint8_t *data, uint16_t size);
 
-i2c_status_e i2c_IsDeviceReady(i2c_t *obj, uint8_t devAddr, uint32_t trials);
+i2c_status_e stm32_i2c_IsDeviceReady(i2c_t *obj, uint8_t devAddr, uint32_t trials);
 
-void i2c_attachSlaveRxEvent(i2c_t *obj, void (*function)(i2c_t *));
-void i2c_attachSlaveTxEvent(i2c_t *obj, void (*function)(i2c_t *));
+void stm32_i2c_attachSlaveRxEvent(i2c_t *obj, void (*function)(i2c_t *));
+void stm32_i2c_attachSlaveTxEvent(i2c_t *obj, void (*function)(i2c_t *));
 
 #ifdef __cplusplus
 }

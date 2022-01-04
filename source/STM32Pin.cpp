@@ -1,5 +1,6 @@
 #include "STM32Pin.h"
 
+#include "Event.h"
 #include "PeripheralPins.h"
 #include "PinConfigured.h"
 #include "analog.h"
@@ -28,7 +29,57 @@ using namespace codal;
 #define ADC_OUPUT_RESOLUTION 10
 #endif
 
+#define PORTPINS  16
+#define PINMASK   (PORTPINS - 1)
+#define GPIO_PORT ((GPIO_TypeDef*)(GPIOA_BASE + 0x400 * ((int)name >> 4)))
+#define GPIO_PIN  (1 << ((uint32_t)name & 0xf))
+
 extern uint32_t g_anOutputPinConfigured[MAX_NB_PORT];
+static STM32Pin* eventPin[16];
+
+static void irq_handler()
+{
+    int pr    = EXTI->PR1;
+    EXTI->PR1 = pr;  // clear all pending bits
+
+    for (int i = 0; i < 16; ++i) {
+        if ((pr & (1 << i)) && eventPin[i]) eventPin[i]->eventCallback();
+    }
+}
+
+#define DEF(nm) \
+    extern "C" void nm() { irq_handler(); }
+
+DEF(EXTI0_IRQHandler)
+DEF(EXTI1_IRQHandler)
+DEF(EXTI2_IRQHandler)
+DEF(EXTI3_IRQHandler)
+DEF(EXTI4_IRQHandler)
+DEF(EXTI9_5_IRQHandler)
+DEF(EXTI15_10_IRQHandler)
+
+static bool irqs_enabled = false;
+static void enable_irqs()
+{
+    if (irqs_enabled) return;
+
+    irqs_enabled = true;
+    NVIC_SetPriority(EXTI0_IRQn, 0);
+    NVIC_SetPriority(EXTI1_IRQn, 0);
+    NVIC_SetPriority(EXTI2_IRQn, 0);
+    NVIC_SetPriority(EXTI3_IRQn, 0);
+    NVIC_SetPriority(EXTI4_IRQn, 0);
+    NVIC_SetPriority(EXTI9_5_IRQn, 0);
+    NVIC_SetPriority(EXTI15_10_IRQn, 0);
+
+    NVIC_EnableIRQ(EXTI0_IRQn);
+    NVIC_EnableIRQ(EXTI1_IRQn);
+    NVIC_EnableIRQ(EXTI2_IRQn);
+    NVIC_EnableIRQ(EXTI3_IRQn);
+    NVIC_EnableIRQ(EXTI4_IRQn);
+    NVIC_EnableIRQ(EXTI9_5_IRQn);
+    NVIC_EnableIRQ(EXTI15_10_IRQn);
+}
 
 static inline uint32_t mapResolution(uint32_t value, uint32_t from, uint32_t to)
 {
@@ -46,7 +97,7 @@ static inline uint32_t mapResolution(uint32_t value, uint32_t from, uint32_t to)
 }
 
 STM32Pin::STM32Pin(int id, PinNumber name, PinCapability capability)
-    : codal::Pin(id, name, capability), pwm(nullptr), analogFrequency(DEFAULT_PWM_FREQ)
+    : codal::Pin(id, name, capability), prevPulse(nullptr), pwm(nullptr), analogFrequency(DEFAULT_PWM_FREQ)
 {
     this->pullMode = DEVICE_DEFAULT_PULLMODE;
 
@@ -84,6 +135,25 @@ void STM32Pin::disconnect()
 
     if (pwm != nullptr) {
         pwm->stop();
+    }
+
+    if (this->status & (IO_STATUS_EVENT_ON_EDGE | IO_STATUS_EVENT_PULSE_ON_EDGE | IO_STATUS_INTERRUPT_ON_EDGE)) {
+        EXTI->IMR1 &= ~GPIO_PIN;
+
+        int pin = (int)name & PINMASK;
+
+#ifdef STM32F1
+        volatile uint32_t* ptr = &AFIO->EXTICR[pin >> 2];
+#else
+        volatile uint32_t* ptr = &SYSCFG->EXTICR[pin >> 2];
+#endif
+        int shift = (pin & 3) * 4;
+
+        // take over line for ourselves
+        *ptr = (*ptr & ~(0xf << shift));
+
+        if (prevPulse) delete prevPulse;
+        prevPulse = nullptr;
     }
 }
 
@@ -273,7 +343,47 @@ int STM32Pin::eventOn(int eventType)
 
 int STM32Pin::enableRiseFallEvents(int eventType)
 {
-    return DEVICE_NOT_IMPLEMENTED;
+    // if we are in neither of the two modes, configure pin as a TimedInterruptIn.
+    if (!(status & (IO_STATUS_EVENT_ON_EDGE | IO_STATUS_EVENT_PULSE_ON_EDGE | IO_STATUS_INTERRUPT_ON_EDGE))) {
+        if (!(status & IO_STATUS_DIGITAL_IN)) getDigitalValue();
+
+        enable_irqs();
+
+        int pin = (int)name & PINMASK;
+
+        eventPin[pin] = this;
+
+#ifdef STM32F1
+        volatile uint32_t* ptr = &AFIO->EXTICR[pin >> 2];
+#else
+        volatile uint32_t* ptr = &SYSCFG->EXTICR[pin >> 2];
+#endif
+        int shift = (pin & 3) * 4;
+        int port  = (int)name >> 4;
+
+        // take over line for ourselves
+        *ptr = (*ptr & ~(0xf << shift)) | (port << shift);
+
+        EXTI->EMR1 &= ~GPIO_PIN;
+        EXTI->IMR1 |= GPIO_PIN;
+        EXTI->RTSR1 |= GPIO_PIN;
+        EXTI->FTSR1 |= GPIO_PIN;
+
+        if (prevPulse == nullptr) prevPulse = new CODAL_TIMESTAMP;
+        *prevPulse = 0;
+    }
+
+    status &= ~(IO_STATUS_EVENT_ON_EDGE | IO_STATUS_EVENT_PULSE_ON_EDGE | IO_STATUS_INTERRUPT_ON_EDGE);
+
+    // set our status bits accordingly.
+    if (eventType == DEVICE_PIN_EVENT_ON_EDGE)
+        status |= IO_STATUS_EVENT_ON_EDGE;
+    else if (eventType == DEVICE_PIN_EVENT_ON_PULSE)
+        status |= IO_STATUS_EVENT_PULSE_ON_EDGE;
+    else if (eventType == DEVICE_PIN_INTERRUPT_ON_EDGE)
+        status |= IO_STATUS_INTERRUPT_ON_EDGE;
+
+    return DEVICE_OK;
 }
 
 int STM32Pin::disableEvents()
@@ -284,4 +394,36 @@ int STM32Pin::disableEvents()
     }
 
     return DEVICE_OK;
+}
+
+/**
+ * This member function manages the calculation of the timestamp of a pulse detected
+ * on a pin whilst in IO_STATUS_EVENT_PULSE_ON_EDGE or IO_STATUS_EVENT_ON_EDGE modes.
+ *
+ * @param eventValue the event value to distribute onto the message bus.
+ */
+void STM32Pin::pulseWidthEvent(int eventValue)
+{
+    Event evt(id, eventValue, CREATE_ONLY);
+    auto now      = evt.timestamp;
+    auto previous = *prevPulse;
+
+    if (previous != 0) {
+        evt.timestamp -= previous;
+        evt.fire();
+    }
+
+    *prevPulse = now;
+}
+
+void STM32Pin::eventCallback()
+{
+    bool isRise = HAL_GPIO_ReadPin(GPIO_PORT, GPIO_PIN);
+
+    if (status & IO_STATUS_EVENT_PULSE_ON_EDGE)
+        pulseWidthEvent(isRise ? DEVICE_PIN_EVT_PULSE_LO : DEVICE_PIN_EVT_PULSE_HI);
+
+    if (status & IO_STATUS_EVENT_ON_EDGE) Event(id, isRise ? DEVICE_PIN_EVT_RISE : DEVICE_PIN_EVT_FALL);
+
+    if (status & IO_STATUS_INTERRUPT_ON_EDGE && gpio_irq) gpio_irq(isRise);
 }

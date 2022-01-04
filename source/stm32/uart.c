@@ -100,13 +100,24 @@ serial_t *get_serial_obj(UART_HandleTypeDef *huart)
   * @param  obj : pointer to serial_t structure
   * @retval None
   */
-void uart_init(serial_t *obj, uint32_t baudrate, uint32_t databits, uint32_t parity, uint32_t stopbits)
+void stm32_uart_init(serial_t *obj, uint32_t baudrate, uint32_t databits, uint32_t parity, uint32_t stopbits)
+{
+  stm32_uart_init_with_mode(obj, baudrate, databits, parity, stopbits, UART_MODE_TX_RX);
+}
+
+/**
+  * @brief  Function called to initialize the uart interface
+  * @param  obj : pointer to serial_t structure
+  * @retval None
+  */
+void stm32_uart_init_with_mode(serial_t *obj, uint32_t baudrate, uint32_t databits, uint32_t parity, uint32_t stopbits, uint32_t mode)
 {
   if (obj == NULL) {
     return;
   }
 
   UART_HandleTypeDef *huart = &(obj->handle);
+  obj->err_callback = NULL;
 
   /* Determine the U(S)ART peripheral to use (USART1, USART2, ...) */
   USART_TypeDef *uart_tx = pinmap_peripheral(obj->pin_tx, PinMap_UART_TX);
@@ -289,7 +300,7 @@ void uart_init(serial_t *obj, uint32_t baudrate, uint32_t databits, uint32_t par
   huart->Init.WordLength   = databits;
   huart->Init.StopBits     = stopbits;
   huart->Init.Parity       = parity;
-  huart->Init.Mode         = UART_MODE_TX_RX;
+  huart->Init.Mode         = mode;
   huart->Init.HwFlowCtl    = UART_HWCONTROL_NONE;
   huart->Init.OverSampling = UART_OVERSAMPLING_16;
 #if !defined(STM32F1xx) && !defined(STM32F2xx) && !defined(STM32F4xx)\
@@ -587,7 +598,7 @@ void uart_debug_init(void)
     serial_debug.pin_tx = pinmap_pin(DEBUG_UART, PinMap_UART_TX);
 #endif
 
-    uart_init(&serial_debug, DEBUG_UART_BAUDRATE, UART_WORDLENGTH_8B, UART_PARITY_NONE, UART_STOPBITS_1);
+    stm32_uart_init(&serial_debug, DEBUG_UART_BAUDRATE, UART_WORDLENGTH_8B, UART_PARITY_NONE, UART_STOPBITS_1);
   }
 }
 
@@ -808,7 +819,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
 {
   serial_t *obj = get_serial_obj(huart);
-  if (obj) {
+  if (obj && obj->tx_callback != NULL) {
     obj->tx_callback(obj);
   }
 }
@@ -845,6 +856,10 @@ void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
   serial_t *obj = get_serial_obj(huart);
   if (obj && !serial_rx_active(obj)) {
     HAL_UART_Receive_IT(huart, &(obj->recv), 1);
+  }
+
+  if (obj && obj->err_callback != NULL) {
+    obj->err_callback(obj);
   }
 }
 

@@ -32,6 +32,8 @@ DEALINGS IN THE SOFTWARE.
 
 namespace codal {
 
+struct ZEventConfig;
+
 class STM32Pin : public Pin {
   public:
     /**
@@ -253,6 +255,16 @@ class STM32Pin : public Pin {
      */
     int eventOn(int eventType) final override;
 
+    /**
+     * This member function manages the calculation of the timestamp of a pulse detected
+     * on a pin whilst in IO_STATUS_EVENT_PULSE_ON_EDGE or IO_STATUS_EVENT_ON_EDGE modes.
+     *
+     * @param eventValue the event value to distribute onto the message bus.
+     */
+    void pulseWidthEvent(int eventValue);
+
+    void eventCallback();
+
   private:
     void disconnect();
 
@@ -275,6 +287,7 @@ class STM32Pin : public Pin {
      */
     int disableEvents();
 
+    CODAL_TIMESTAMP* prevPulse;
     codal::STM32PWM* pwm;
     uint32_t analogFrequency;
 };

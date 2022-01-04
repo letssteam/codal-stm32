@@ -577,9 +577,9 @@ static uint32_t i2c_getTiming(i2c_t *obj, uint32_t frequency)
   * @param  obj : pointer to i2c_t structure
   * @retval none
   */
-void i2c_init(i2c_t *obj)
+void stm32_i2c_init(i2c_t *obj)
 {
-  i2c_custom_init(obj, 100000, I2C_ADDRESSINGMODE_7BIT, 0x33);
+  stm32_i2c_custom_init(obj, 100000, I2C_ADDRESSINGMODE_7BIT, 0x33);
 }
 
 /**
@@ -590,7 +590,7 @@ void i2c_init(i2c_t *obj)
   * @param  ownAddress : device address
   * @retval none
   */
-void i2c_custom_init(i2c_t *obj, uint32_t timing, uint32_t addressingMode, uint32_t ownAddress)
+void stm32_i2c_custom_init(i2c_t *obj, uint32_t timing, uint32_t addressingMode, uint32_t ownAddress)
 {
   if (obj != NULL) {
 
@@ -739,7 +739,7 @@ void i2c_custom_init(i2c_t *obj, uint32_t timing, uint32_t addressingMode, uint3
   * @param  obj : pointer to i2c_t structure
   * @retval none
   */
-void i2c_deinit(i2c_t *obj)
+void stm32_i2c_deinit(i2c_t *obj)
 {
   HAL_NVIC_DisableIRQ(obj->irq);
 #if !defined(STM32F0xx) && !defined(STM32G0xx) && !defined(STM32L0xx)
@@ -754,7 +754,7 @@ void i2c_deinit(i2c_t *obj)
   * @param  frequency : i2c transmission speed
   * @retval none
   */
-void i2c_setTiming(i2c_t *obj, uint32_t frequency)
+void stm32_i2c_setTiming(i2c_t *obj, uint32_t frequency)
 {
   uint32_t f = i2c_getTiming(obj, frequency);
   __HAL_I2C_DISABLE(&(obj->handle));
@@ -783,7 +783,7 @@ void i2c_setTiming(i2c_t *obj, uint32_t frequency)
   * @param  size: number of bytes to be write.
   * @retval read status
   */
-i2c_status_e i2c_master_write(i2c_t *obj, uint8_t dev_address,
+i2c_status_e stm32_i2c_master_write(i2c_t *obj, uint8_t dev_address,
                               uint8_t *data, uint16_t size)
 
 {
@@ -794,7 +794,7 @@ i2c_status_e i2c_master_write(i2c_t *obj, uint8_t dev_address,
 
   /* When size is 0, this is usually an I2C scan / ping to check if device is there and ready */
   if (size == 0) {
-    ret = i2c_IsDeviceReady(obj, dev_address, 1);
+    ret = stm32_i2c_IsDeviceReady(obj, dev_address, 1);
   } else {
 #if defined(I2C_OTHER_FRAME)
     uint32_t XferOptions = obj->handle.XferOptions; // save XferOptions value, because handle can be modified by HAL, which cause issue in case of NACK from slave
@@ -836,7 +836,7 @@ i2c_status_e i2c_master_write(i2c_t *obj, uint8_t dev_address,
   * @param  size: number of bytes to be write.
   * @retval status
   */
-i2c_status_e i2c_slave_write_IT(i2c_t *obj, uint8_t *data, uint16_t size)
+i2c_status_e stm32_i2c_slave_write_IT(i2c_t *obj, uint8_t *data, uint16_t size)
 {
   uint8_t i = 0;
   i2c_status_e ret = I2C_OK;
@@ -863,7 +863,7 @@ i2c_status_e i2c_slave_write_IT(i2c_t *obj, uint8_t *data, uint16_t size)
   * @param  size: number of bytes to be read.
   * @retval read status
   */
-i2c_status_e i2c_master_read(i2c_t *obj, uint8_t dev_address, uint8_t *data, uint16_t size)
+i2c_status_e stm32_i2c_master_read(i2c_t *obj, uint8_t dev_address, uint8_t *data, uint16_t size)
 {
   i2c_status_e ret = I2C_OK;
   uint32_t tickstart = HAL_GetTick();
@@ -909,7 +909,7 @@ i2c_status_e i2c_master_read(i2c_t *obj, uint8_t dev_address, uint8_t *data, uin
   * @param  trials : Number of trials.
   * @retval status
   */
-i2c_status_e i2c_IsDeviceReady(i2c_t *obj, uint8_t devAddr, uint32_t trials)
+i2c_status_e stm32_i2c_IsDeviceReady(i2c_t *obj, uint8_t devAddr, uint32_t trials)
 {
   i2c_status_e ret = I2C_OK;
 
@@ -949,7 +949,7 @@ i2c_t *get_i2c_obj(I2C_HandleTypeDef *hi2c)
   * @param  function: callback function to use
   * @retval None
   */
-void i2c_attachSlaveRxEvent(i2c_t *obj, void (*function)(i2c_t *))
+void stm32_i2c_attachSlaveRxEvent(i2c_t *obj, void (*function)(i2c_t *))
 {
   if ((obj != NULL) && (function != NULL)) {
     obj->i2c_onSlaveReceive = function;
@@ -962,7 +962,7 @@ void i2c_attachSlaveRxEvent(i2c_t *obj, void (*function)(i2c_t *))
   * @param  function: callback function to use
   * @retval None
   */
-void i2c_attachSlaveTxEvent(i2c_t *obj, void (*function)(i2c_t *))
+void stm32_i2c_attachSlaveTxEvent(i2c_t *obj, void (*function)(i2c_t *))
 {
   if ((obj != NULL) && (function != NULL)) {
     obj->i2c_onSlaveTransmit = function;
@@ -1084,7 +1084,7 @@ void HAL_I2C_SlaveTxCpltCallback(I2C_HandleTypeDef *hi2c)
 /**
   * @brief  I2C error callback.
   * @note   In master mode, the callback is not used because the error is reported
-  *         to the Arduino API from i2c_master_write() and i2c_master_read().
+  *         to the Arduino API from stm32_i2c_master_write() and stm32_i2c_master_read().
   *         In slave mode, there is no mechanism in Arduino API to report an error
   *         so the error callback forces the slave to listen again.
   * @param  hi2c Pointer to a I2C_HandleTypeDef structure that contains

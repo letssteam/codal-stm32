@@ -34,7 +34,7 @@ void STM32Serial::init(uint32_t baudrate, LengthSerial databits, ParitySerial pa
     serial.pin_rx = (PinName)rxPin.name;
     serial.pin_tx = (PinName)txPin.name;
 
-    uart_init(&serial, baudrate, (uint32_t)databits, (uint32_t)parity, (uint32_t)stopBit);
+    stm32_uart_init(&serial, baudrate, (uint32_t)databits, (uint32_t)parity, (uint32_t)stopBit);
     uart_attach_rx_callback(&serial, RxIRQ);
 }
 
@@ -62,7 +62,7 @@ int STM32Serial::setBaudrate(uint32_t baudrate)
     this->baudrate = baudrate;
 
     uart_deinit(&serial);
-    uart_init(&serial, baudrate, (uint32_t)databits, (uint32_t)parity, (uint32_t)stopBit);
+    stm32_uart_init(&serial, baudrate, (uint32_t)databits, (uint32_t)parity, (uint32_t)stopBit);
 
     return DEVICE_OK;
 }
@@ -76,7 +76,7 @@ int STM32Serial::configurePins(Pin& tx, Pin& rx)
     serial.pin_tx = (PinName)tx.name;
 
     uart_deinit(&serial);
-    uart_init(&serial, baudrate, (uint32_t)databits, (uint32_t)parity, (uint32_t)stopBit);
+    stm32_uart_init(&serial, baudrate, (uint32_t)databits, (uint32_t)parity, (uint32_t)stopBit);
 
     return DEVICE_OK;
 }

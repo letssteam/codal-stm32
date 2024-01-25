@@ -16,21 +16,6 @@ constexpr uint8_t OUTZ_H_REG = 0x6D;
 
 constexpr float SENSITIVITY = 50.0 / 32768.0;
 
-constexpr bool isBitSet(uint8_t reg, uint8_t bit)
-{
-    return (reg & (1 << bit)) > 0;
-}
-
-constexpr void setBitRegister(uint8_t* reg, uint8_t bit)
-{
-    *reg &= ~(1 << bit);
-}
-
-constexpr void clearBitRegister(uint8_t* reg, uint8_t bit)
-{
-    *reg |= 1 << bit;
-}
-
 LIS2MDL::LIS2MDL(STM32I2C* i2c, uint16_t address) : i2c(i2c), address(address) {}
 
 void LIS2MDL::init()

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <STM32I2C.h>
+#include "../registerBit_utils.h"
 
 #include <cstdint>
 #include <functional>

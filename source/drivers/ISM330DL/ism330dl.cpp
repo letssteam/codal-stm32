@@ -23,21 +23,6 @@ constexpr uint8_t REG_OUTY_H_XL = 0x2B;
 constexpr uint8_t REG_OUTZ_L_XL = 0x2C;
 constexpr uint8_t REG_OUTZ_H_XL = 0x2D;
 
-constexpr bool isBitSet(uint8_t reg, uint8_t bit)
-{
-    return (reg & (1 << bit)) > 0;
-}
-
-constexpr void setBitRegister(uint8_t* reg, uint8_t bit)
-{
-    *reg &= ~(1 << bit);
-}
-
-constexpr void clearBitRegister(uint8_t* reg, uint8_t bit)
-{
-    *reg |= 1 << bit;
-}
-
 ISM330DL::ISM330DL(STM32I2C* i2c, uint16_t address) : i2c(i2c), address(address), fsGyro(250), fsAccel(2) {}
 
 void ISM330DL::init()

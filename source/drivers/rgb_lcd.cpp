@@ -284,42 +284,42 @@ size_t rgb_lcd::print(char c)
     return write(c);
 }
 
-size_t rgb_lcd::print(unsigned char b, int base)
+size_t rgb_lcd::print(unsigned char b, PrintRadix base)
 {
     return print((unsigned long)b, base);
 }
 
-size_t rgb_lcd::print(int n, int base)
+size_t rgb_lcd::print(int n, PrintRadix base)
 {
     return print((long)n, base);
 }
 
-size_t rgb_lcd::print(unsigned int n, int base)
+size_t rgb_lcd::print(unsigned int n, PrintRadix base)
 {
     return print((unsigned long)n, base);
 }
 
-size_t rgb_lcd::print(long n, int base)
+size_t rgb_lcd::print(long n,PrintRadix base)
 {
-    if (base == 0) {
+    if (base == PrintRadix::DEC) {
         return write(n);
     }
-    else if (base == 10) {
+    else if (base == PrintRadix::HEX) {
         if (n < 0) {
             int t = print('-');
             n     = -n;
-            return printNumber(n, 10) + t;
+            return printNumber(n, PrintRadix::HEX) + t;
         }
-        return printNumber(n, 10);
+        return printNumber(n, PrintRadix::HEX);
     }
     else {
         return printNumber(n, base);
     }
 }
 
-size_t rgb_lcd::print(unsigned long n, int base)
+size_t rgb_lcd::print(unsigned long n, PrintRadix base)
 {
-    if (base == 0)
+    if (base == PrintRadix::DEC)
         return write(n);
     else
         return printNumber(n, base);
@@ -332,7 +332,7 @@ size_t rgb_lcd::print(double n, int digits)
 
 // Private Methods /////////////////////////////////////////////////////////////
 
-size_t rgb_lcd::printNumber(unsigned long n, uint8_t base)
+size_t rgb_lcd::printNumber(unsigned long n, PrintRadix base)
 {
     char buf[8 * sizeof(long) + 1];  // Assumes 8-bit chars plus zero byte.
     char* str = &buf[sizeof(buf) - 1];
@@ -340,12 +340,14 @@ size_t rgb_lcd::printNumber(unsigned long n, uint8_t base)
     *str = '\0';
 
     // prevent crash if called with base == 1
-    if (base < 2) base = 10;
+    if (base != PrintRadix::DEC) {
+        base = PrintRadix::DEC;  // Assuming DEC as default if base is not provided or is invalid
+    }
 
     do {
         unsigned long m = n;
-        n /= base;
-        char c = m - base * n;
+        n /= static_cast<uint8_t>(base);  // Cast base to uint8_t
+        char c = m - static_cast<uint8_t>(base) * n;  // Cast base to uint8_t
         *--str = c < 10 ? c + '0' : c + 'A' - 10;
     } while (n);
 

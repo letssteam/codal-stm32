@@ -3,16 +3,11 @@
 
 #include <inttypes.h>
 #include "STM32I2C.h"
+#include "lcd_utils.h"
 
 // Device I2C Adress
 #define LCD_ADDRESS     (0x7c)
 #define RGB_ADDRESS     (0xc4)
-
-// base define
-#define DEC 10
-#define HEX 16
-#define OCT 8
-#define BIN 2
 
 // color define 
 #define WHITE           0
@@ -68,6 +63,7 @@
 #define LCD_5x8DOTS 0x00
 
 namespace codal {
+
 class rgb_lcd 
 {
 private:
@@ -77,10 +73,21 @@ private:
   uint8_t dotsize;
   int write_error;
 
-  size_t printNumber(unsigned long, uint8_t);
+  size_t printNumber(unsigned long, PrintRadix base);
   void printLLNumber(uint64_t, uint8_t );
   size_t printFloat(double, uint8_t);
 
+  void send(uint8_t, uint8_t);
+  void writeRGBRegister(unsigned char addr, unsigned char dta);
+
+  uint8_t _displayfunction;
+  uint8_t _displaycontrol;
+  uint8_t _displaymode;
+
+  uint8_t _initialized;
+
+  uint8_t _numlines;
+  uint8_t _currline;
 protected:
   void setWriteError(int err = 1) { write_error = err; }
   
@@ -159,25 +166,12 @@ public:
 
   size_t print(const char[]);
   size_t print(char);
-  size_t print(unsigned char, int = DEC);
-  size_t print(int, int = DEC);
-  size_t print(unsigned int, int = DEC);
-  size_t print(long, int = DEC);
-  size_t print(unsigned long, int = DEC);
+  size_t print(unsigned char, PrintRadix = PrintRadix::DEC);
+  size_t print(int, PrintRadix = PrintRadix::DEC);
+  size_t print(unsigned int, PrintRadix = PrintRadix::DEC);
+  size_t print(long, PrintRadix = PrintRadix::DEC);
+  size_t print(unsigned long, PrintRadix = PrintRadix::DEC);
   size_t print(double, int = 2);
-
-private:
-  void send(uint8_t, uint8_t);
-  void writeRGBRegister(unsigned char addr, unsigned char dta);
-
-  uint8_t _displayfunction;
-  uint8_t _displaycontrol;
-  uint8_t _displaymode;
-
-  uint8_t _initialized;
-
-  uint8_t _numlines;
-  uint8_t _currline;
 };
 }
 #endif

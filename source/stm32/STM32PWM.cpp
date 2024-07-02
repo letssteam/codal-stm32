@@ -7,7 +7,12 @@
 using namespace codal;
 
 STM32PWM::STM32PWM(PinName pin, uint32_t frequency)
-    : isStart(false), pinName(pin), timFunction(pinmap_find_function(pinName, PinMap_TIM))
+    : isStart{false}, pinName{pin}, timFunction{pinmap_find_function(pinName, PinMap_TIM)}, frequency{frequency}
+{
+    init();
+}
+
+void STM32PWM::init()
 {
     GPIO_InitTypeDef GPIO_InitStruct;
     uint32_t fct = pinmap_find_function(pinName, PinMap_TIM);

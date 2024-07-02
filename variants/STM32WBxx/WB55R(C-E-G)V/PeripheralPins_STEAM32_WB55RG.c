@@ -63,7 +63,7 @@ WEAK const PinMap PinMap_I2C_SDA[] = {{PA_10, I2C1, STM_PIN_DATA(STM_MODE_AF_OD,
                                       {PB_9, I2C1, STM_PIN_DATA(STM_MODE_AF_OD, GPIO_PULLUP, GPIO_AF4_I2C1)},
                                       {PB_11, I2C3, STM_PIN_DATA(STM_MODE_AF_OD, GPIO_NOPULL, GPIO_AF4_I2C3)},
                                       {PB_14, I2C3, STM_PIN_DATA(STM_MODE_AF_OD, GPIO_NOPULL, GPIO_AF4_I2C3)},
-                                      {PC_1, I2C3, STM_PIN_DATA(STM_MODE_AF_OD, GPIO_NOPULL, GPIO_AF4_I2C3)},
+                                      {PC_1, I2C3, STM_PIN_DATA(STM_MODE_AF_OD, GPIO_PULLUP, GPIO_AF4_I2C3)},
                                       {NC, NP, 0}};
 #endif
 
@@ -74,7 +74,7 @@ WEAK const PinMap PinMap_I2C_SCL[] = {{PA_7, I2C3, STM_PIN_DATA(STM_MODE_AF_OD, 
                                       {PB_8, I2C1, STM_PIN_DATA(STM_MODE_AF_OD, GPIO_PULLUP, GPIO_AF4_I2C1)},
                                       {PB_10, I2C3, STM_PIN_DATA(STM_MODE_AF_OD, GPIO_NOPULL, GPIO_AF4_I2C3)},
                                       {PB_13, I2C3, STM_PIN_DATA(STM_MODE_AF_OD, GPIO_NOPULL, GPIO_AF4_I2C3)},
-                                      {PC_0, I2C3, STM_PIN_DATA(STM_MODE_AF_OD, GPIO_NOPULL, GPIO_AF4_I2C3)},
+                                      {PC_0, I2C3, STM_PIN_DATA(STM_MODE_AF_OD, GPIO_PULLUP, GPIO_AF4_I2C3)},
                                       {NC, NP, 0}};
 #endif
 

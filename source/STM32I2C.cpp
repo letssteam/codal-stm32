@@ -39,8 +39,6 @@ i2c_status_e STM32I2C::endTransmission(bool sendStop)
 
     i2c_init(&i2c);
 
-    setXferOptions(sendStop);
-
     i2c_status_e lastStatus;
     unsigned packets = dataToSent.size() / getBufferSize();
 
@@ -51,6 +49,13 @@ i2c_status_e STM32I2C::endTransmission(bool sendStop)
     for (unsigned i = 0; i < packets; ++i) {
         auto offset = i * getBufferSize();
         auto length = min<unsigned>(dataToSent.size() - offset, getBufferSize());
+
+        if (i == (packets - 1) && sendStop) {
+            setXferOptions(true);
+        }
+        else {
+            setXferOptions(false);
+        }
 
         lastStatus = i2c_master_write(&i2c, currentAddress, dataToSent.data() + offset, length);
 

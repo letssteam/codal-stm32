@@ -10,6 +10,8 @@
 using namespace codal;
 using namespace std;
 
+constexpr float deg_to_rad = F_PI / 180.0;
+
 FrameBuffer::FrameBuffer(unsigned widthPixel, unsigned heightPixel, FrameBuffer::Format format)
     : width(widthPixel), height(heightPixel), format(format)
 {
@@ -360,6 +362,16 @@ void FrameBuffer::drawEllipse(int width, int height, int xCenter, int yCenter, b
 void FrameBuffer::drawCircle(int x, int y, int radius, bool fill, uint16_t color)
 {
     drawEllipse(radius * 2, radius * 2, x, y, fill, color);
+}
+
+void FrameBuffer::drawArc(int x, int y, int radius, int start_angle, int end_angle, uint16_t color)
+{
+    float theta_rad = 0;
+
+    for (int theta = start_angle; theta <= end_angle; ++theta) {
+        theta_rad = theta * deg_to_rad;
+        drawPixel(x + radius * cos(theta_rad), y + radius * sin(theta_rad), color);
+    }
 }
 
 void FrameBuffer::drawPolygon(uint8_t x, uint8_t y, uint8_t line, uint8_t radius, uint8_t size, uint16_t color)

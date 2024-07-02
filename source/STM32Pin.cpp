@@ -132,6 +132,13 @@ int STM32Pin::setAnalogValue(int value)
     // check if this pin has an analogue mode...
     if (!(PIN_CAPABILITY_ANALOG & capability)) return DEVICE_NOT_SUPPORTED;
 
+    if (!(status & IO_STATUS_ANALOG_OUT)) {
+        disconnect();
+        pwm->init();
+
+        status = IO_STATUS_ANALOG_OUT;
+    }
+
     // sanitise the level value
     if (value < 0 || value > DEVICE_PIN_MAX_OUTPUT) return DEVICE_INVALID_PARAMETER;
 

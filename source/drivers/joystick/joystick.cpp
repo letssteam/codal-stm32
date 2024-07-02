@@ -9,7 +9,7 @@
 using namespace codal;
 
 Joystick::Joystick(STM32Pin& horizontalAxisPin, STM32Pin& verticalAxisPin, STM32Pin& buttonPin, uint8_t deadzone)
-    : directionUserEvents({nullptr}), buttonUserEvents({nullptr})
+    : directionUserEvents{{nullptr}}, buttonUserEvents{{nullptr}}
 {
     horizontalSensor = new AnalogSensor(horizontalAxisPin, 6666);
     verticalSensor   = new AnalogSensor(verticalAxisPin, 9999);

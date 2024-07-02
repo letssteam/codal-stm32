@@ -47,7 +47,7 @@ void STM32SPI::beginTransaction()
         Error_Handler();
     }
 
-    GPIO_InitTypeDef GPIO_InitStruct = {0};
+    GPIO_InitTypeDef GPIO_InitStruct;
     GPIO_TypeDef* port;
 
     if (pin_sclk != NC) {

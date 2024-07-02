@@ -9,6 +9,7 @@ class STM32PWM {
     STM32PWM(PinName pin, uint32_t frequency);
     ~STM32PWM() {}
 
+    void init();
     void setFrequency(uint32_t freq);
     void setDutyCyle(uint8_t percent);
     void setDutyCycleFromResolution(uint32_t value, uint8_t resolution = 10);
